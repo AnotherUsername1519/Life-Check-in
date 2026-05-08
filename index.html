@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Check-In</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0F0F0E;
+  --surface: #1A1A18;
+  --surface2: #222220;
+  --border: #2E2E2B;
+  --accent: #C8F060;
+  --accent2: #60C8F0;
+  --warn: #F0A060;
+  --danger: #F06060;
+  --text: #F0EDE6;
+  --muted: #888680;
+  --faint: #444240;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'Instrument Sans', sans-serif;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* NAV */
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+}
+
+.nav-title {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.nav-tab {
+  font-family: var(--font-head);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.nav-tab.active {
+  background: var(--accent);
+  color: #0F0F0E;
+}
+
+/* VIEWS */
+.view { display: none; padding: 1.5rem; max-width: 800px; margin: 0 auto; }
+.view.active { display: block; }
+
+/* DAY SELECTOR */
+.day-selector {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.day-btn {
+  flex-shrink: 0;
+  font-family: var(--font-head);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.day-btn.active {
+  background: var(--accent);
+  color: #0F0F0E;
+  border-color: var(--accent);
+}
+
+.day-btn .day-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent2);
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+
+/* DATE ROW */
+.date-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+
+.date-label {
+  font-family: var(--font-head);
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-head);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.week-nav button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.week-nav button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* EVENT CARDS */
+.events-list { display: flex; flex-direction: column; gap: 8px; }
+
+.event-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.event-card.completed { border-color: #2D6A4F55; }
+.event-card.skipped { border-color: #F0606055; }
+.event-card.flagged { border-left: 3px solid var(--warn); }
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.event-color {
+  width: 6px;
+  height: 36px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.event-info { flex: 1; min-width: 0; }
+
+.event-time {
+  font-family: var(--font-head);
+  font-size: 0.58rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.event-name {
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--faint);
+  flex-shrink: 0;
+}
+
+.status-dot.done { background: var(--accent); }
+.status-dot.skip { background: var(--danger); }
+
+.chevron {
+  font-size: 0.7rem;
+  color: var(--muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.event-card.open .chevron { transform: rotate(180deg); }
+
+/* CHECK-IN FORM */
+.checkin-form {
+  display: none;
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.event-card.open .checkin-form { display: block; }
+
+.form-row {
+  margin-top: 12px;
+}
+
+.form-label {
+  font-family: var(--font-head);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Happened toggle */
+.happened-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.happened-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-family: var(--font-head);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.happened-btn.yes.active { background: #1A3D2A; border-color: var(--accent); color: var(--accent); }
+.happened-btn.no.active { background: #3D1A1A; border-color: var(--danger); color: var(--danger); }
+
+/* Star rating */
+.star-row {
+  display: flex;
+  gap: 4px;
+}
+
+.star {
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--faint);
+  transition: color 0.1s, transform 0.1s;
+  line-height: 1;
+}
+
+.star:hover, .star.active { color: #F0C060; transform: scale(1.1); }
+
+/* Textarea */
+.form-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 70px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-textarea:focus { border-color: var(--accent2); }
+.form-textarea::placeholder { color: var(--faint); }
+
+/* Reschedule */
+.reschedule-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.reschedule-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  padding: 8px 12px;
+  outline: none;
+}
+
+.reschedule-input:focus { border-color: var(--accent2); }
+
+/* Save button */
+.save-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  color: #0F0F0E;
+  border: none;
+  border-radius: 7px;
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.save-btn:hover { opacity: 0.85; }
+.save-btn:active { opacity: 0.7; }
+
+.saved-confirm {
+  display: none;
+  text-align: center;
+  font-family: var(--font-head);
+  font-size: 0.68rem;
+  color: var(--accent);
+  margin-top: 8px;
+  letter-spacing: 0.06em;
+}
+
+/* SUMMARY VIEW */
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.summary-title {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.stat-label {
+  font-family: var(--font-head);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.stat-val {
+  font-family: var(--font-head);
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stat-val.green { color: var(--accent); }
+.stat-val.blue { color: var(--accent2); }
+.stat-val.orange { color: var(--warn); }
+.stat-val.red { color: var(--danger); }
+
+.stat-sub {
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Flags */
+.flags-section { margin-bottom: 1.5rem; }
+
+.section-label {
+  font-family: var(--font-head);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.flag-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.flag-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+.flag-body p { font-size: 0.8rem; line-height: 1.55; color: var(--text); }
+.flag-body .flag-sub { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+
+/* History list */
+.history-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.history-name {
+  font-family: var(--font-head);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.history-meta {
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.history-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.stars-display { color: #F0C060; font-size: 0.75rem; letter-spacing: 1px; }
+
+.badge {
+  display: inline-block;
+  font-family: var(--font-head);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.badge-green { background: #1A3D2A; color: var(--accent); }
+.badge-red { background: #3D1A1A; color: var(--danger); }
+.badge-orange { background: #3D2A1A; color: var(--warn); }
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.8;
+}
+
+.empty-state .big { font-family: var(--font-head); font-size: 2rem; display: block; margin-bottom: 0.5rem; opacity: 0.3; }
+
+/* CLAUDE EXPORT VIEW */
+.export-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+.copy-btn {
+  background: var(--accent2);
+  color: #0F0F0E;
+  border: none;
+  border-radius: 7px;
+  padding: 10px 20px;
+  font-family: var(--font-head);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.copy-btn:hover { opacity: 0.85; }
+
+hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* Progress bar */
+.progress-bar-wrap {
+  height: 4px;
+  background: var(--faint);
+  border-radius: 2px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-title">LIFE CHECK-IN</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('checkin')">Today</button>
+    <button class="nav-tab" onclick="showView('summary')">Summary</button>
+    <button class="nav-tab" onclick="showView('history')">History</button>
+    <button class="nav-tab" onclick="showView('export')">For Claude</button>
+  </div>
+</nav>
+
+<!-- CHECK-IN VIEW -->
+<div id="view-checkin" class="view active">
+  <div class="day-selector" id="daySelector"></div>
+  <div class="date-row">
+    <div class="date-label" id="dateLabel">—</div>
+    <div class="week-nav">
+      <button onclick="changeWeek(-1)">← Prev</button>
+      <span id="weekLabel">This week</span>
+      <button onclick="changeWeek(1)">Next →</button>
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="events-list" id="eventsList"></div>
+</div>
+
+<!-- SUMMARY VIEW -->
+<div id="view-summary" class="view">
+  <div class="summary-header">
+    <div class="summary-title">Weekly summary</div>
+    <div class="week-nav">
+      <button onclick="changeSummaryWeek(-1)">← Prev</button>
+      <span id="summaryWeekLabel">This week</span>
+      <button onclick="changeSummaryWeek(1)">Next →</button>
+    </div>
+  </div>
+  <div class="stat-grid" id="statGrid"></div>
+  <hr class="divider">
+  <div class="flags-section">
+    <div class="section-label">🚩 Smart flags</div>
+    <div id="flagsList"></div>
+  </div>
+  <hr class="divider">
+  <div class="section-label">Activity breakdown</div>
+  <div id="activityBreakdown"></div>
+</div>
+
+<!-- HISTORY VIEW -->
+<div id="view-history" class="view">
+  <div class="section-label" style="margin-bottom:1rem;">All check-ins — most recent first</div>
+  <div id="historyList"></div>
+</div>
+
+<!-- CLAUDE EXPORT VIEW -->
+<div id="view-export" class="view">
+  <div class="section-label" style="margin-bottom:0.5rem;">Data for Claude analysis</div>
+  <p style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Copy this and paste it into your Claude conversation to get schedule analysis, pattern insights, and recommendations.</p>
+  <div class="export-box" id="exportBox">Loading...</div>
+  <button class="copy-btn" onclick="copyExport()">Copy to clipboard</button>
+  <button class="copy-btn" style="background:var(--warn)" onclick="clearAllData()">Clear all data</button>
+  <p id="copyConfirm" style="display:none;font-size:0.7rem;color:var(--accent);margin-top:8px;font-family:var(--font-head);letter-spacing:0.06em;">Copied!</p>
+</div>
+
+<script>
+// ─── SCHEDULE DATA ────────────────────────────────────────────────
+const SCHEDULE = {
+  Monday: [
+    { id:'mon-sleep', time:'10:00pm–6:00am', name:'Sleep', color:'#1D3557', category:'sleep' },
+    { id:'mon-workout', time:'6:00–7:00am', name:'Workout', color:'#2D6A4F', category:'workout' },
+    { id:'mon-morning', time:'7:00–7:45am', name:'Shower · Shave · Dress · Breakfast', color:'#457B9D', category:'morning' },
+    { id:'mon-commute', time:'7:45–8:15am', name:'Commute to Paoli', color:'#6B6860', category:'commute' },
+    { id:'mon-work', time:'8:15am–4:15pm', name:'Work', color:'#264653', category:'work' },
+    { id:'mon-commute2', time:'4:15–4:45pm', name:'Commute home', color:'#4a4845', category:'commute' },
+    { id:'mon-decompress', time:'4:45–5:15pm', name:'Decompress', color:'#7F77DD', category:'mental' },
+    { id:'mon-dinner', time:'5:15–6:15pm', name:'Make + Eat Dinner', color:'#F4A261', category:'meals' },
+    { id:'mon-kids', time:'6:15–7:30pm', name:'Kids Time', color:'#E76F51', category:'kids' },
+    { id:'mon-chores', time:'7:30–8:00pm', name:'Chores', color:'#A8A49E', category:'chores' },
+    { id:'mon-spouse', time:'8:00–9:00pm', name:'Spouse Time', color:'#9B72CF', category:'spouse' },
+    { id:'mon-reading', time:'9:00–9:30pm', name:'Reading', color:'#2D6A4F', category:'reading' },
+    { id:'mon-winddown', time:'9:30–10:00pm', name:'Wind-down', color:'#1D3557', category:'winddown' },
+  ],
+  Tuesday: [
+    { id:'tue-sleep', time:'9:45pm–5:00am', name:'Sleep', color:'#1D3557', category:'sleep' },
+    { id:'tue-workout', time:'5:00–6:00am', name:'Workout (HRV check)', color:'#2D6A4F', category:'workout' },
+    { id:'tue-morning', time:'6:00–7:15am', name:'Shower · Dress · Breakfast + Kids', color:'#457B9D', category:'morning' },
+    { id:'tue-bus', time:'7:15–8:30am', name:'Kids to Bus', color:'#E76F51', category:'kids' },
+    { id:'tue-commute', time:'8:30–9:00am', name:'Commute to Paoli', color:'#6B6860', category:'commute' },
+    { id:'tue-work', time:'9:00am–3:00pm', name:'Work', color:'#264653', category:'work' },
+    { id:'tue-commute2', time:'3:00–3:25pm', name:'Commute home', color:'#4a4845', category:'commute' },
+    { id:'tue-pickup', time:'3:25–4:00pm', name:'Pickup → Gymnastics drop-off', color:'#E76F51', category:'kids' },
+    { id:'tue-decompress', time:'4:00–4:30pm', name:'Decompress', color:'#7F77DD', category:'mental' },
+    { id:'tue-dinner', time:'4:30–5:30pm', name:'Make Dinner', color:'#F4A261', category:'meals' },
+    { id:'tue-son1on1', time:'5:30–6:30pm', name:'Son 1:1 Time', color:'#E76F51', category:'kids' },
+    { id:'tue-gympu', time:'6:30–7:00pm', name:'Pickup from Gymnastics', color:'#E76F51', category:'kids' },
+    { id:'tue-family', time:'7:00–8:00pm', name:'Family Dinner + Connect', color:'#E9C46A', category:'family' },
+    { id:'tue-reading', time:'8:00–9:00pm', name:'Reading', color:'#2D6A4F', category:'reading' },
+    { id:'tue-winddown', time:'9:00–9:45pm', name:'Wind-down', color:'#1D3557', category:'winddown' },
+  ],
+  Wednesday: [
+    { id:'wed-sleep', time:'9:45pm–5:00am', name:'Sleep', color:'#1D3557', category:'sleep' },
+    { id:'wed-workout', time:'5:00–6:00am', name:'Workout (HRV check)', color:'#2D6A4F', category:'workout' },
+    { id:'wed-morning', time:'6:00–7:15am', name:'Shower · Shave · Dress · Breakfast + Kids', color:'#457B9D', category:'morning' },
+    { id:'wed-bus', time:'7:15–8:30am', name:'Kids to Bus', color:'#E76F51', category:'kids' },
+    { id:'wed-commute', time:'8:30–9:00am', name:'Commute to Paoli', color:'#6B6860', category:'commute' },
+    { id:'wed-work', time:'9:00am–3:00pm', name:'Work', color:'#264653', category:'work' },
+    { id:'wed-commute2', time:'3:00–3:25pm', name:'Commute home', color:'#4a4845', category:'commute' },
+    { id:'wed-pickup', time:'3:25–4:00pm', name:'Pickup → Gymnastics drop-off', color:'#E76F51', category:'kids' },
+    { id:'wed-decompress', time:'4:00–4:30pm', name:'Decompress', color:'#7F77DD', category:'mental' },
+    { id:'wed-dinner', time:'4:30–5:30pm', name:'Make Dinner', color:'#F4A261', category:'meals' },
+    { id:'wed-daughter1on1', time:'5:30–6:30pm', name:'Daughter 1:1 Time', color:'#E76F51', category:'kids' },
+    { id:'wed-gympu', time:'6:30–7:00pm', name:'Pickup from Gymnastics', color:'#E76F51', category:'kids' },
+    { id:'wed-family', time:'7:00–8:00pm', name:'Family Time', color:'#E9C46A', category:'family' },
+    { id:'wed-chores', time:'7:30–8:00pm', name:'Chores (Vacuum · Powder Room · Bath #2)', color:'#A8A49E', category:'chores' },
+    { id:'wed-reading', time:'8:00–9:00pm', name:'Reading', color:'#2D6A4F', category:'reading' },
+    { id:'wed-winddown', time:'9:00–9:45pm', name:'Wind-down', color:'#1D3557', category:'winddown' },
+  ],
+  Thursday: [
+    { id:'thu-sleep', time:'9:45pm–5:00am', name:'Sleep', color:'#1D3557', category:'sleep' },
+    { id:'thu-workout', time:'5:00–6:00am', name:'Workout (HRV check)', color:'#2D6A4F', category:'workout' },
+    { id:'thu-morning', time:'6:00–7:15am', name:'Shower · Dress · Breakfast', color:'#457B9D', category:'morning' },
+    { id:'thu-bus', time:'7:15–8:30am', name:'Kids to Bus', color:'#E76F51', category:'kids' },
+    { id:'thu-commute', time:'8:30–9:00am', name:'Commute to Paoli', color:'#6B6860', category:'commute' },
+    { id:'thu-work', time:'9:00am–3:00pm', name:'Work', color:'#264653', category:'work' },
+    { id:'thu-commute2', time:'3:00–3:30pm', name:'Commute home', color:'#4a4845', category:'commute' },
+    { id:'thu-decompress', time:'3:30–4:00pm', name:'Decompress', color:'#7F77DD', category:'mental' },
+    { id:'thu-climbing', time:'4:00–6:00pm', name:'Kids Climbing Club', color:'#E76F51', category:'kids' },
+    { id:'thu-dinner', time:'4:30–5:30pm', name:'Make Dinner', color:'#F4A261', category:'meals' },
+    { id:'thu-family', time:'6:15–7:30pm', name:'Family Dinner + Connect', color:'#E9C46A', category:'family' },
+    { id:'thu-spouse', time:'7:30–8:30pm', name:'Spouse Time', color:'#9B72CF', category:'spouse' },
+    { id:'thu-reading', time:'8:30–9:15pm', name:'Reading', color:'#2D6A4F', category:'reading' },
+    { id:'thu-winddown', time:'9:15–9:45pm', name:'Wind-down', color:'#1D3557', category:'winddown' },
+  ],
+  Friday: [
+    { id:'fri-sleep', time:'10:30pm–7:00am', name:'Sleep', color:'#1D3557', category:'sleep' },
+    { id:'fri-recovery', time:'7:00–8:00am', name:'Easy Morning (Walk · Stretch)', color:'#52796F', category:'workout' },
+    { id:'fri-morning', time:'8:00–8:30am', name:'Shower · Shave · Get Ready', color:'#457B9D', category:'morning' },
+    { id:'fri-commute', time:'8:30–9:00am', name:'Commute to Paoli', color:'#6B6860', category:'commute' },
+    { id:'fri-work', time:'9:00am–3:00pm', name:'Work', color:'#264653', category:'work' },
+    { id:'fri-commute2', time:'3:00–3:25pm', name:'Commute home', color:'#4a4845', category:'commute' },
+    { id:'fri-kids', time:'3:25–4:00pm', name:'Kids Pickup / Gymnastics', color:'#E76F51', category:'kids' },
+    { id:'fri-decompress', time:'4:00–4:30pm', name:'Decompress', color:'#7F77DD', category:'mental' },
+    { id:'fri-dinner', time:'4:30–5:30pm', name:'Dinner', color:'#F4A261', category:'meals' },
+    { id:'fri-family', time:'5:30–7:30pm', name:'Family Time', color:'#E9C46A', category:'family' },
+    { id:'fri-extended', time:'7:30–8:30pm', name:'Extended Family (calls)', color:'#BC6C25', category:'extended' },
+    { id:'fri-spouse', time:'8:30–10:00pm', name:'Spouse Time (Date-in)', color:'#9B72CF', category:'spouse' },
+  ],
+  Saturday: [
+    { id:'sat-sleep', time:'—–7:30am', name:'Sleep (no alarm)', color:'#1D3557', category:'sleep' },
+    { id:'sat-morning', time:'7:30–8:30am', name:'Easy Morning', color:'#457B9D', category:'morning' },
+    { id:'sat-workout', time:'8:30–10:30am', name:'Weekend Workout (1–2hr)', color:'#2D6A4F', category:'workout' },
+    { id:'sat-yard', time:'10:30am–12:30pm', name:'Yard Work (Mow + Trim)', color:'#588157', category:'chores' },
+    { id:'sat-lunch', time:'12:30–1:30pm', name:'Lunch', color:'#F4A261', category:'meals' },
+    { id:'sat-kids', time:'1:30–3:00pm', name:'Kids Time (1:1 or together)', color:'#E76F51', category:'kids' },
+    { id:'sat-chores', time:'3:00–4:00pm', name:'Chores (Bathrooms · Floors)', color:'#A8A49E', category:'chores' },
+    { id:'sat-extended', time:'4:00–5:00pm', name:'Extended Family', color:'#BC6C25', category:'extended' },
+    { id:'sat-family', time:'5:00–7:00pm', name:'Family Dinner + Activity', color:'#E9C46A', category:'family' },
+    { id:'sat-mental', time:'7:00–8:00pm', name:'Mental Health Time', color:'#7F77DD', category:'mental' },
+    { id:'sat-reading', time:'8:00–9:00pm', name:'Reading', color:'#2D6A4F', category:'reading' },
+  ],
+  Sunday: [
+    { id:'sun-sleep', time:'—–7:00am', name:'Sleep (no alarm)', color:'#1D3557', category:'sleep' },
+    { id:'sun-morning', time:'7:00–8:30am', name:'Slow Family Morning', color:'#457B9D', category:'morning' },
+    { id:'sun-workout', time:'8:30–10:00am', name:'Weekend Workout (1–2hr)', color:'#2D6A4F', category:'workout' },
+    { id:'sun-family', time:'10:00am–12:00pm', name:'Family Time (outing/church)', color:'#E9C46A', category:'family' },
+    { id:'sun-lunch', time:'12:00–1:30pm', name:'Lunch', color:'#F4A261', category:'meals' },
+    { id:'sun-son1on1', time:'1:30–3:00pm', name:'Son 1:1 Time', color:'#E76F51', category:'kids' },
+    { id:'sun-mental', time:'3:00–3:45pm', name:'Mental Health (walk · journal)', color:'#7F77DD', category:'mental' },
+    { id:'sun-extended', time:'3:45–4:45pm', name:'Extended Family (great-grandfather call)', color:'#BC6C25', category:'extended' },
+    { id:'sun-chores', time:'4:45–5:30pm', name:'Week Prep + Chores', color:'#A8A49E', category:'chores' },
+    { id:'sun-dinner', time:'5:30–6:30pm', name:'Family Dinner', color:'#F4A261', category:'meals' },
+    { id:'sun-family2', time:'6:30–7:30pm', name:'Family Time (games/movie)', color:'#E9C46A', category:'family' },
+    { id:'sun-reading', time:'7:30–8:30pm', name:'Reading', color:'#2D6A4F', category:'reading' },
+    { id:'sun-winddown', time:'8:30–10:00pm', name:'Wind-down + Early Bed', color:'#1D3557', category:'winddown' },
+  ]
+};
+
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+// ─── STATE ───────────────────────────────────────────────────────
+let currentDayIdx = new Date().getDay();
+let weekOffset = 0;
+let summaryWeekOffset = 0;
+let checkins = {};
+
+// Storage keys
+const STORAGE_KEY = 'life_checkins_v2';
+
+function saveCheckins() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checkins)); } catch(e) {}
+}
+
+function loadCheckins() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) checkins = JSON.parse(d);
+  } catch(e) { checkins = {}; }
+}
+
+function getWeekStart(offset = 0) {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = now.getDate() - day;
+  const sun = new Date(now.setDate(diff));
+  sun.setDate(sun.getDate() + offset * 7);
+  sun.setHours(0,0,0,0);
+  return sun;
+}
+
+function getDateKey(dayName, weekOff = 0) {
+  const ws = getWeekStart(weekOff);
+  const dayIdx = DAYS.indexOf(dayName);
+  const d = new Date(ws);
+  d.setDate(ws.getDate() + dayIdx);
+  return d.toISOString().slice(0,10);
+}
+
+function getCheckinKey(eventId, dateKey) {
+  return `${dateKey}__${eventId}`;
+}
+
+// ─── CHECK-IN VIEW ────────────────────────────────────────────────
+function buildDaySelector() {
+  const sel = document.getElementById('daySelector');
+  sel.innerHTML = '';
+  DAYS.forEach((day, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (i === currentDayIdx ? ' active' : '');
+    btn.textContent = day.slice(0,3).toUpperCase();
+    // Check if any checkins exist for this day this week
+    const dk = getDateKey(day, weekOffset);
+    const events = SCHEDULE[day] || [];
+    const hasAny = events.some(e => checkins[getCheckinKey(e.id, dk)]);
+    if (hasAny) {
+      const badge = document.createElement('div');
+      badge.className = 'day-badge';
+      btn.appendChild(badge);
+    }
+    btn.onclick = () => { currentDayIdx = i; renderCheckinView(); };
+    sel.appendChild(btn);
+  });
+}
+
+function renderCheckinView() {
+  buildDaySelector();
+  const dayName = DAYS[currentDayIdx];
+  const dateKey = getDateKey(dayName, weekOffset);
+  const ws = getWeekStart(weekOffset);
+  const we = new Date(ws); we.setDate(ws.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  document.getElementById('weekLabel').textContent = `${fmt(ws)} – ${fmt(we)}`;
+
+  const d = new Date(ws); d.setDate(ws.getDate() + DAYS.indexOf(dayName));
+  document.getElementById('dateLabel').textContent = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  const events = SCHEDULE[dayName] || [];
+  const done = events.filter(e => {
+    const c = checkins[getCheckinKey(e.id, dateKey)];
+    return c && c.happened !== null;
+  }).length;
+  document.getElementById('progressBar').style.width = events.length ? `${Math.round(done/events.length*100)}%` : '0%';
+
+  const list = document.getElementById('eventsList');
+  list.innerHTML = '';
+
+  events.forEach(event => {
+    const ck = checkins[getCheckinKey(event.id, dateKey)] || {};
+    const card = document.createElement('div');
+    card.className = 'event-card' +
+      (ck.happened === true ? ' completed' : ck.happened === false ? ' skipped' : '') +
+      (shouldFlag(event.id) ? ' flagged' : '');
+    card.dataset.id = event.id;
+
+    card.innerHTML = `
+      <div class="event-header" onclick="toggleCard(this)">
+        <div class="event-color" style="background:${event.color}"></div>
+        <div class="event-info">
+          <div class="event-time">${event.time}</div>
+          <div class="event-name">${event.name}</div>
+        </div>
+        <div class="event-status">
+          <div class="status-dot ${ck.happened === true ? 'done' : ck.happened === false ? 'skip' : ''}"></div>
+          ${ck.rating ? '<div style="font-size:0.65rem;color:#F0C060">${"★".repeat(ck.rating)}</div>' : ''}
+        </div>
+        <div class="chevron">▼</div>
+      </div>
+      <div class="checkin-form">
+        <div class="form-row">
+          <label class="form-label">Did this happen?</label>
+          <div class="happened-toggle">
+            <button class="happened-btn yes ${ck.happened === true ? 'active' : ''}" onclick="setHappened('${event.id}','${dateKey}',true,this)">✓ Yes</button>
+            <button class="happened-btn no ${ck.happened === false ? 'active' : ''}" onclick="setHappened('${event.id}','${dateKey}',false,this)">✗ No</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Rating</label>
+          <div class="star-row" id="stars-${event.id}">
+            ${[1,2,3,4,5].map(n => `<span class="star ${ck.rating >= n ? 'active' : ''}" onclick="setRating('${event.id}','${dateKey}',${n})">★</span>`).join('')}
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">How did it go? Any notes?</label>
+          <textarea class="form-textarea" id="note-${event.id}" placeholder="What happened, what worked, what didn't...">${ck.note || ''}</textarea>
+        </div>
+        ${event.category === 'sleep'
+          ? `<div class="form-row" id="nap-section-${event.id}">
+              <label class="form-label">💤 Nap window suggestion</label>
+              <div id="nap-box-${event.id}" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:0.78rem;line-height:1.7;color:var(--muted);">
+                ${getNapSuggestion(DAYS[currentDayIdx], ck.rating)}
+              </div>
+              <div style="font-size:0.65rem;color:var(--faint);margin-top:5px;font-family:var(--font-head);letter-spacing:0.04em;">Rate your sleep above to get a personalized nap recommendation</div>
+            </div>`
+          : `<div class="form-row">
+              <label class="form-label">Reschedule suggestion (optional)</label>
+              <input class="reschedule-input" id="reschedule-${event.id}" placeholder="e.g. Move to 6pm on Thursdays" value="${ck.reschedule || ''}">
+            </div>`
+        }
+        <button class="save-btn" onclick="saveCheckin('${event.id}','${dateKey}')">Save check-in</button>
+        <div class="saved-confirm" id="confirm-${event.id}">✓ Saved</div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function toggleCard(header) {
+  const card = header.closest('.event-card');
+  card.classList.toggle('open');
+}
+
+function setHappened(eventId, dateKey, val, btn) {
+  const ck = checkins[getCheckinKey(eventId, dateKey)] || {};
+  ck.happened = val;
+  checkins[getCheckinKey(eventId, dateKey)] = ck;
+  saveCheckins();
+  const form = btn.closest('.checkin-form');
+  form.querySelectorAll('.happened-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const dot = btn.closest('.event-card').querySelector('.status-dot');
+  dot.className = 'status-dot ' + (val ? 'done' : 'skip');
+  btn.closest('.event-card').className = btn.closest('.event-card').className
+    .replace(' completed','').replace(' skipped','') +
+    (val ? ' completed' : ' skipped');
+}
+
+// ─── NAP SUGGESTIONS ─────────────────────────────────────────────
+// Per-day nap windows based on your actual schedule gaps
+const NAP_WINDOWS = {
+  Monday:    { gap1: 'No natural gap today — commute day.', gap2: 'Best option: 20 min in the car before leaving (7:25–7:45am) or ask spouse to cover 15 min after work (4:45pm) before decompressing.' },
+  Tuesday:   { gap1: '4:00–4:30pm decompress block', gap2: 'Swap the decompress for a 20-min nap immediately after getting home (4:00–4:20pm). Set an alarm — do not exceed 25 min or you will feel worse.' },
+  Wednesday: { gap1: '4:00–4:30pm decompress block', gap2: 'Same as Tuesday — 20-min nap at 4:00pm during decompress window. Keep it under 25 min.' },
+  Thursday:  { gap1: '3:30–4:00pm decompress block', gap2: '20-min nap at 3:30pm during decompress. You have until 4pm when kids get home from bus — perfect window.' },
+  Friday:    { gap1: 'No hard constraint after work', gap2: '20-min nap at 4:00pm during decompress block — wife is WFH so coverage is available. Easy day to recover sleep debt.' },
+  Saturday:  { gap1: 'After lunch (1:00–1:30pm)', gap2: 'Best recovery day. 20–30 min nap after lunch (1:00–1:30pm) before kids time at 1:30pm. Weekend naps are your main tool for recovering the weekly sleep deficit.' },
+  Sunday:    { gap1: 'After lunch (1:15–1:30pm) or after mental health block', gap2: '20-min nap after lunch (1:15–1:30pm) before son\'s 1:1 at 1:30pm — tight but doable. Alternative: rest during the 3:00–3:45pm mental health block if the walk can move to earlier.' },
+};
+
+function getNapSuggestion(dayName, rating) {
+  const windows = NAP_WINDOWS[dayName] || {};
+  if (!rating) {
+    return `<span style="color:var(--faint)">Rate your sleep above (1–2 = poor, 3 = fair, 4–5 = good) to see a personalized nap recommendation for ${dayName}.</span>`;
+  }
+  if (rating >= 4) {
+    return `<strong style="color:var(--accent)">Sleep was good (${rating}★) — no nap needed today.</strong><br>Protect tonight's bedtime to stay consistent.`;
+  }
+  if (rating === 3) {
+    return `<strong style="color:var(--warn)">Sleep was fair (3★).</strong> A short nap is optional but could help if you feel sluggish.<br><br>
+    <strong>Best window on ${dayName}:</strong> ${windows.gap1 || 'See schedule for gaps.'}<br><br>
+    <span style="color:var(--muted)">${windows.gap2 || ''}</span><br><br>
+    <strong style="color:var(--faint)">Nap rules:</strong> 20 min max · Set an alarm · No napping after 3pm on work days (delays tonight's sleep onset).`;
+  }
+  // Rating 1-2: poor sleep
+  return `<strong style="color:var(--danger)">Sleep was poor (${rating}★) — a nap is recommended today.</strong><br><br>
+  <strong>Best window on ${dayName}:</strong> ${windows.gap1 || 'See schedule for gaps.'}<br><br>
+  <span style="color:var(--muted)">${windows.gap2 || ''}</span><br><br>
+  <strong style="color:var(--faint)">Nap rules:</strong> 20–25 min only · Set a firm alarm · Lie down, don't fully recline if possible · Have caffeine <em>before</em> the nap (takes 20 min to kick in) · No napping after 3pm on work days.<br><br>
+  <span style="color:var(--warn)">⚠ Also: tonight move bedtime 30 min earlier to start rebuilding. Your HRV will likely be suppressed — consider downgrading workout intensity.`;
+}
+
+function setRating(eventId, dateKey, rating) {
+  const ck = checkins[getCheckinKey(eventId, dateKey)] || {};
+  ck.rating = rating;
+  checkins[getCheckinKey(eventId, dateKey)] = ck;
+  saveCheckins();
+  const stars = document.querySelectorAll(`#stars-${eventId} .star`);
+  stars.forEach((s,i) => s.classList.toggle('active', i < rating));
+  // Refresh nap box live if this is a sleep event
+  const napBox = document.getElementById(`nap-box-${eventId}`);
+  if (napBox) {
+    const dayName = DAYS[currentDayIdx];
+    napBox.innerHTML = getNapSuggestion(dayName, rating);
+    const hint = napBox.nextElementSibling;
+    if (hint) hint.style.display = 'none';
+  }
+}
+
+function saveCheckin(eventId, dateKey) {
+  const ck = checkins[getCheckinKey(eventId, dateKey)] || {};
+  const note = document.getElementById(`note-${eventId}`);
+  const reschedule = document.getElementById(`reschedule-${eventId}`);
+  if (note) ck.note = note.value;
+  // Only save reschedule for non-sleep events
+  if (reschedule) ck.reschedule = reschedule.value;
+  // For sleep events, record nap recommendation was shown
+  const napBox = document.getElementById(`nap-box-${eventId}`);
+  if (napBox && ck.rating) {
+    ck.napRecommended = ck.rating <= 2 ? 'yes' : ck.rating === 3 ? 'optional' : 'no';
+  }
+  ck.savedAt = new Date().toISOString();
+  checkins[getCheckinKey(eventId, dateKey)] = ck;
+  saveCheckins();
+  const conf = document.getElementById(`confirm-${eventId}`);
+  if (conf) { conf.style.display = 'block'; setTimeout(() => conf.style.display = 'none', 2000); }
+  renderCheckinView();
+}
+
+function changeWeek(dir) {
+  weekOffset += dir;
+  renderCheckinView();
+}
+
+// ─── FLAG LOGIC ───────────────────────────────────────────────────
+function shouldFlag(eventId) {
+  let skipCount = 0, lowRatings = 0, total = 0;
+  Object.keys(checkins).forEach(key => {
+    if (key.includes(eventId)) {
+      const ck = checkins[key];
+      total++;
+      if (ck.happened === false) skipCount++;
+      if (ck.rating && ck.rating <= 2) lowRatings++;
+    }
+  });
+  return total >= 2 && (skipCount >= 2 || lowRatings >= 2);
+}
+
+// ─── SUMMARY VIEW ─────────────────────────────────────────────────
+function renderSummary() {
+  const ws = getWeekStart(summaryWeekOffset);
+  const we = new Date(ws); we.setDate(ws.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  document.getElementById('summaryWeekLabel').textContent = `${fmt(ws)} – ${fmt(we)}`;
+
+  let total = 0, happened = 0, skipped = 0, ratingSum = 0, ratingCount = 0;
+  let reschedules = [], flags = [], categoryStats = {};
+
+  DAYS.forEach(day => {
+    const dk = getDateKey(day, summaryWeekOffset);
+    (SCHEDULE[day]||[]).forEach(event => {
+      const ck = checkins[getCheckinKey(event.id, dk)];
+      if (!ck || ck.happened === null || ck.happened === undefined) return;
+      total++;
+      if (ck.happened) happened++;
+      else skipped++;
+      if (ck.rating) { ratingSum += ck.rating; ratingCount++; }
+      if (ck.reschedule) reschedules.push({ name: event.name, suggestion: ck.reschedule });
+
+      const cat = event.category;
+      if (!categoryStats[cat]) categoryStats[cat] = { total:0, happened:0, ratingSum:0, ratingCount:0 };
+      categoryStats[cat].total++;
+      if (ck.happened) categoryStats[cat].happened++;
+      if (ck.rating) { categoryStats[cat].ratingSum += ck.rating; categoryStats[cat].ratingCount++; }
+    });
+  });
+
+  const pct = total > 0 ? Math.round(happened/total*100) : 0;
+  const avgRating = ratingCount > 0 ? (ratingSum/ratingCount).toFixed(1) : '—';
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Completion rate</div><div class="stat-val ${pct>=80?'green':pct>=60?'blue':'orange'}">${pct}%</div><div class="stat-sub">${happened}/${total} checked</div></div>
+    <div class="stat-card"><div class="stat-label">Avg rating</div><div class="stat-val blue">${avgRating}</div><div class="stat-sub">out of 5.0</div></div>
+    <div class="stat-card"><div class="stat-label">Skipped</div><div class="stat-val ${skipped===0?'green':'red'}">${skipped}</div><div class="stat-sub">events missed</div></div>
+    <div class="stat-card"><div class="stat-label">Reschedules</div><div class="stat-val orange">${reschedules.length}</div><div class="stat-sub">suggested</div></div>
+  `;
+
+  // Flags
+  const fl = document.getElementById('flagsList');
+  const flagItems = [];
+  DAYS.forEach(day => {
+    (SCHEDULE[day]||[]).forEach(event => {
+      if (shouldFlag(event.id)) {
+        let skipC=0, lowC=0;
+        Object.keys(checkins).forEach(k => {
+          if(k.includes(event.id)){
+            if(checkins[k].happened===false) skipC++;
+            if(checkins[k].rating<=2) lowC++;
+          }
+        });
+        flagItems.push({ name:event.name, day, skipC, lowC });
+      }
+    });
+  });
+
+  if (flagItems.length === 0 && total === 0) {
+    fl.innerHTML = '<div class="empty-state"><span class="big">📋</span>No check-ins yet this week.<br>Start checking in daily to see smart flags here.</div>';
+  } else if (flagItems.length === 0) {
+    fl.innerHTML = '<div class="flag-item"><div class="flag-icon">✅</div><div class="flag-body"><p><strong>No flags this week.</strong> Everything is tracking well.</p></div></div>';
+  } else {
+    fl.innerHTML = flagItems.map(f => `
+      <div class="flag-item">
+        <div class="flag-icon">🚩</div>
+        <div class="flag-body">
+          <p><strong>${f.name}</strong> — ${f.skipC > 0 ? `skipped ${f.skipC}x` : ''} ${f.lowC > 0 ? `rated ≤2 ${f.lowC}x` : ''}</p>
+          <p class="flag-sub">Consider rescheduling or removing from your template</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (reschedules.length > 0) {
+    fl.innerHTML += '<hr class="divider"><div class="section-label">Reschedule suggestions</div>' +
+      reschedules.map(r => `
+        <div class="flag-item">
+          <div class="flag-icon">📅</div>
+          <div class="flag-body"><p><strong>${r.name}</strong></p><p class="flag-sub">${r.suggestion}</p></div>
+        </div>
+      `).join('');
+  }
+
+  // Category breakdown
+  const ab = document.getElementById('activityBreakdown');
+  const catLabels = { sleep:'Sleep', workout:'Workout', morning:'Morning routine', commute:'Commute', work:'Work', kids:'Kids time', meals:'Meals', chores:'Chores', family:'Family time', spouse:'Spouse time', reading:'Reading', mental:'Mental health', winddown:'Wind-down', extended:'Extended family' };
+  if (Object.keys(categoryStats).length === 0) {
+    ab.innerHTML = '<div class="empty-state" style="padding:1.5rem"><span class="big" style="font-size:1.5rem">📊</span>Check in to activities to see category breakdown.</div>';
+  } else {
+    ab.innerHTML = Object.entries(categoryStats).map(([cat, s]) => {
+      const pct = s.total > 0 ? Math.round(s.happened/s.total*100) : 0;
+      const avg = s.ratingCount > 0 ? (s.ratingSum/s.ratingCount).toFixed(1) : '—';
+      return `
+        <div class="history-item">
+          <div class="history-header">
+            <div class="history-name">${catLabels[cat]||cat}</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="badge ${pct>=80?'badge-green':pct>=50?'badge-orange':'badge-red'}">${pct}%</span>
+              ${avg!=='—'?`<span style="color:#F0C060;font-size:0.75rem">${'★'.repeat(Math.round(avg))}</span>`:''}
+            </div>
+          </div>
+          <div class="history-meta">${s.happened}/${s.total} completed · avg rating ${avg}</div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function changeSummaryWeek(dir) {
+  summaryWeekOffset += dir;
+  renderSummary();
+}
+
+// ─── HISTORY VIEW ─────────────────────────────────────────────────
+function renderHistory() {
+  const hl = document.getElementById('historyList');
+  const entries = Object.entries(checkins)
+    .filter(([,v]) => v.savedAt)
+    .sort((a,b) => new Date(b[1].savedAt) - new Date(a[1].savedAt));
+
+  if (entries.length === 0) {
+    hl.innerHTML = '<div class="empty-state"><span class="big">📝</span>No check-ins yet.<br>Check in to your daily events to build history.</div>';
+    return;
+  }
+
+  hl.innerHTML = entries.slice(0, 80).map(([key, ck]) => {
+    const parts = key.split('__');
+    const dateKey = parts[0];
+    const eventId = parts[1];
+    // Find event name
+    let eventName = eventId;
+    for (const day of DAYS) {
+      const ev = (SCHEDULE[day]||[]).find(e => e.id === eventId);
+      if (ev) { eventName = ev.name; break; }
+    }
+    const d = new Date(dateKey);
+    const dateStr = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    return `
+      <div class="history-item">
+        <div class="history-header">
+          <div class="history-name">${eventName}</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            ${ck.happened === true ? '<span class="badge badge-green">Done</span>' : ck.happened === false ? '<span class="badge badge-red">Skipped</span>' : ''}
+            ${ck.rating ? `<span class="stars-display">${'★'.repeat(ck.rating)}</span>` : ''}
+          </div>
+        </div>
+        <div class="history-meta">${dateStr}</div>
+        ${ck.note ? `<div class="history-note">${ck.note}</div>` : ''}
+        ${ck.reschedule ? `<div class="history-note" style="color:var(--warn)">↺ ${ck.reschedule}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── CLAUDE EXPORT VIEW ───────────────────────────────────────────
+function renderExport() {
+  const entries = Object.entries(checkins);
+  if (entries.length === 0) {
+    document.getElementById('exportBox').textContent = 'No check-in data yet. Complete some check-ins first.';
+    return;
+  }
+
+  let summary = `SCHEDULE CHECK-IN DATA — ${new Date().toLocaleDateString()}\n`;
+  summary += `Total check-ins: ${entries.length}\n\n`;
+
+  // Stats
+  let happened = 0, skipped = 0, ratingSum = 0, ratingCount = 0;
+  entries.forEach(([,v]) => {
+    if (v.happened === true) happened++;
+    if (v.happened === false) skipped++;
+    if (v.rating) { ratingSum += v.rating; ratingCount++; }
+  });
+  summary += `OVERALL STATS:\n`;
+  summary += `- Completed: ${happened} / Skipped: ${skipped}\n`;
+  summary += `- Avg rating: ${ratingCount > 0 ? (ratingSum/ratingCount).toFixed(2) : 'N/A'}\n\n`;
+
+  // Flags
+  const flagged = [];
+  DAYS.forEach(day => {
+    (SCHEDULE[day]||[]).forEach(event => {
+      if (shouldFlag(event.id)) flagged.push(event.name);
+    });
+  });
+  if (flagged.length > 0) summary += `FLAGGED ACTIVITIES (skipped 2+ times or rated ≤2):\n${flagged.map(f=>`- ${f}`).join('\n')}\n\n`;
+
+  // All entries
+  summary += `FULL CHECK-IN LOG:\n`;
+  entries.sort((a,b) => (b[1].savedAt||'').localeCompare(a[1].savedAt||'')).forEach(([key, ck]) => {
+    const parts = key.split('__');
+    let eventName = parts[1];
+    for (const day of DAYS) {
+      const ev = (SCHEDULE[day]||[]).find(e => e.id === parts[1]);
+      if (ev) { eventName = ev.name; break; }
+    }
+    summary += `\n[${parts[0]}] ${eventName}\n`;
+    if (ck.happened !== undefined && ck.happened !== null) summary += `  Happened: ${ck.happened ? 'Yes' : 'No'}\n`;
+    if (ck.rating) summary += `  Rating: ${ck.rating}/5\n`;
+    if (ck.note) summary += `  Note: ${ck.note}\n`;
+    if (ck.reschedule) summary += `  Reschedule: ${ck.reschedule}\n`;
+  });
+
+  document.getElementById('exportBox').textContent = summary;
+}
+
+function copyExport() {
+  const text = document.getElementById('exportBox').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const c = document.getElementById('copyConfirm');
+    c.style.display = 'block';
+    setTimeout(() => c.style.display = 'none', 2000);
+  });
+}
+
+function clearAllData() {
+  if (confirm('Clear all check-in data? This cannot be undone.')) {
+    checkins = {};
+    saveCheckins();
+    renderExport();
+  }
+}
+
+// ─── VIEW SWITCHING ───────────────────────────────────────────────
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  const tabMap = { checkin: 0, summary: 1, history: 2, export: 3 };
+  document.querySelectorAll('.nav-tab')[tabMap[name]].classList.add('active');
+  if (name === 'summary') renderSummary();
+  if (name === 'history') renderHistory();
+  if (name === 'export') renderExport();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+loadCheckins();
+currentDayIdx = new Date().getDay();
+renderCheckinView();
+</script>
+</body>
+</html>
